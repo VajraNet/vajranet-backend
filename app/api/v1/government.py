@@ -126,6 +126,13 @@ def update_government_incident(
 # -----------------------------------------------------------------
 # ANNOUNCEMENTS
 # -----------------------------------------------------------------
+@router.get("/announcements", summary="Government: List Announcements")
+def list_government_announcements(db: Session = Depends(get_db)):
+    announcements = AnnouncementService.get_active_announcements(db)
+    response_data = [AnnouncementResponse.model_validate(a) for a in announcements]
+    return success_response(data=response_data, message="Announcements retrieved")
+
+
 @router.post("/announcements", summary="Government: Publish Emergency Announcement", status_code=status.HTTP_201_CREATED)
 def publish_government_announcement(
     data: AnnouncementCreate,

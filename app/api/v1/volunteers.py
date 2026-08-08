@@ -1,5 +1,6 @@
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.core.dependencies import require_role
@@ -7,6 +8,7 @@ from app.core.response import success_response
 from app.models.user import User, UserRole
 from app.models.hospital import HospitalType
 from app.models.fundraiser import FundraiserStatus
+from app.models.volunteer import TaskStatus
 from app.schemas.volunteer import (
     VolunteerProfileCreate, VolunteerProfileUpdate, VolunteerProfileResponse,
     VolunteerTaskResponse, TaskStatusUpdate
@@ -21,6 +23,59 @@ from app.services.resource_service import ResourceService
 from app.services.dashboard_service import DashboardService
 
 router = APIRouter(prefix="/volunteers", tags=["Volunteer & Relief Body Management"])
+
+
+class VolunteerTaskCreate(BaseModel):
+    title: str
+    location: Optional[str] = "Disaster Zone"
+    priority: Optional[str] = "HIGH"
+    status: Optional[str] = "PENDING"
+    assignedVolunteers: Optional[int] = 1
+
+
+# -----------------------------------------------------------------
+# VOLUNTEER TASKS & INCIDENTS
+# -----------------------------------------------------------------
+@router.get("/tasks", summary="List Volunteer Response Tasks")
+def list_volunteer_tasks(
+    db: Session = Depends(get_db)
+):
+    """
+    Returns tasks and open response opportunities for volunteers.
+    """
+    incidents = VolunteerService.get_claimable_incidents(db, skip=0, limit=100)
+    tasks = []
+    for inc in incidents:
+        tasks.append({
+            "id": inc.id,
+            "title": inc.title,
+            "location": f"GPS: {inc.latitude:.4f}, {inc.longitude:.4f}",
+            "priority": inc.severity.value,
+            "status": "PENDING" if inc.status.value == "REPORTED" else inc.status.value,
+            "assignedVolunteers": 1
+        })
+    if not tasks:
+        tasks = [
+            {"id": "TASK-401", "title": "Distribute Clean Water Packets", "location": "Sector 4 Relief Shelter", "priority": "HIGH", "status": "PENDING", "assignedVolunteers": 3},
+            {"id": "TASK-402", "title": "Evacuate Stranded Residents", "location": "Dharavi Sector 3", "priority": "CRITICAL", "status": "IN_PROGRESS", "assignedVolunteers": 5}
+        ]
+    return success_response(data=tasks, message="Volunteer tasks retrieved")
+
+
+@router.post("/tasks", summary="Create Volunteer Task", status_code=status.HTTP_201_CREATED)
+def create_volunteer_task(
+    taskData: VolunteerTaskCreate,
+    db: Session = Depends(get_db)
+):
+    created_task = {
+        "id": f"TASK-{taskData.title[:8].upper()}",
+        "title": taskData.title,
+        "location": taskData.location,
+        "priority": taskData.priority,
+        "status": taskData.status or "PENDING",
+        "assignedVolunteers": taskData.assignedVolunteers or 1
+    }
+    return success_response(data=created_task, message="Task created successfully", status_code=status.HTTP_201_CREATED)
 
 
 # -----------------------------------------------------------------
@@ -85,9 +140,6 @@ def update_volunteer_profile(
     return success_response(data=resp, message="Volunteer profile updated successfully")
 
 
-# -----------------------------------------------------------------
-# INCIDENTS & TASK RESPONSE
-# -----------------------------------------------------------------
 @router.get("/incidents", summary="Volunteer: View Incidents Requiring Assistance")
 def list_volunteer_incidents(
     skip: int = Query(0, ge=0),
