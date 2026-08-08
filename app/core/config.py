@@ -1,6 +1,5 @@
 import os
 from typing import List, Union
-from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -23,15 +22,20 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
 
     # CORS
-    FRONTEND_URL: Union[str, List[str]] = os.getenv("FRONTEND_URL", "http://localhost:3000,http://localhost:5173")
+    FRONTEND_URL: Union[str, List[str]] = os.getenv(
+        "FRONTEND_URL",
+        "http://localhost:3000,http://localhost:3001,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:3001,capacitor://localhost,http://localhost,*"
+    )
 
     @property
     def cors_origins(self) -> List[str]:
         if isinstance(self.FRONTEND_URL, list):
             return self.FRONTEND_URL
         if isinstance(self.FRONTEND_URL, str):
+            if self.FRONTEND_URL == "*":
+                return ["*"]
             return [url.strip() for url in self.FRONTEND_URL.split(",") if url.strip()]
-        return ["http://localhost:3000", "http://localhost:5173"]
+        return ["*"]
 
     # Cloudinary
     CLOUDINARY_CLOUD_NAME: str = os.getenv("CLOUDINARY_CLOUD_NAME", "")

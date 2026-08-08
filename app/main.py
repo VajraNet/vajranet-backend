@@ -43,10 +43,10 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-# Configure CORS for Frontend Integration
+# Configure CORS for All Local and Deployed Frontends
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origin_regex=r"https?://.*|capacitor://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
