@@ -126,11 +126,16 @@ def update_government_incident(
 # -----------------------------------------------------------------
 # ANNOUNCEMENTS
 # -----------------------------------------------------------------
-@router.get("/announcements", summary="Government: List Announcements")
-def list_government_announcements(db: Session = Depends(get_db)):
-    announcements = AnnouncementService.get_active_announcements(db)
+@router.get("/announcements", summary="Government: View All Announcements")
+def list_government_announcements(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    current_user: User = Depends(require_role(UserRole.GOVERNMENT)),
+    db: Session = Depends(get_db)
+):
+    announcements = AnnouncementService.get_all_announcements(db, skip=skip, limit=limit)
     response_data = [AnnouncementResponse.model_validate(a) for a in announcements]
-    return success_response(data=response_data, message="Announcements retrieved")
+    return success_response(data=response_data, message="Government announcements retrieved")
 
 
 @router.post("/announcements", summary="Government: Publish Emergency Announcement", status_code=status.HTTP_201_CREATED)

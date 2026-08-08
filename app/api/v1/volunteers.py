@@ -1,6 +1,6 @@
 from typing import Optional, List
-from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.core.dependencies import require_role
@@ -8,7 +8,6 @@ from app.core.response import success_response
 from app.models.user import User, UserRole
 from app.models.hospital import HospitalType
 from app.models.fundraiser import FundraiserStatus
-from app.models.volunteer import TaskStatus
 from app.schemas.volunteer import (
     VolunteerProfileCreate, VolunteerProfileUpdate, VolunteerProfileResponse,
     VolunteerTaskResponse, TaskStatusUpdate
@@ -68,7 +67,7 @@ def create_volunteer_task(
     db: Session = Depends(get_db)
 ):
     created_task = {
-        "id": f"TASK-{taskData.title[:8].upper()}",
+        "id": f"TASK-{taskData.title[:8].upper().replace(' ', '')}",
         "title": taskData.title,
         "location": taskData.location,
         "priority": taskData.priority,
@@ -140,6 +139,9 @@ def update_volunteer_profile(
     return success_response(data=resp, message="Volunteer profile updated successfully")
 
 
+# -----------------------------------------------------------------
+# INCIDENTS & TASK RESPONSE
+# -----------------------------------------------------------------
 @router.get("/incidents", summary="Volunteer: View Incidents Requiring Assistance")
 def list_volunteer_incidents(
     skip: int = Query(0, ge=0),
