@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
 
-    # Database
+    # Database (Supabase PostgreSQL / SQLite)
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./vajranet.db")
     DIRECT_URL: str = ""
 
@@ -37,12 +37,15 @@ class Settings(BaseSettings):
             return [url.strip() for url in self.FRONTEND_URL.split(",") if url.strip()]
         return ["*"]
 
-    # Cloudinary
+    # Cloudinary Toggle
+    ENABLE_CLOUDINARY: bool = os.getenv("ENABLE_CLOUDINARY", "false").lower() in ("true", "1", "yes")
     CLOUDINARY_CLOUD_NAME: str = os.getenv("CLOUDINARY_CLOUD_NAME", "")
     CLOUDINARY_API_KEY: str = os.getenv("CLOUDINARY_API_KEY", "")
     CLOUDINARY_API_SECRET: str = os.getenv("CLOUDINARY_API_SECRET", "")
 
-    # AI Chatbot
+    # Standalone VajraAI Suite Toggle
+    ENABLE_AI: bool = os.getenv("ENABLE_AI", "false").lower() in ("true", "1", "yes")
+    VAJRA_AI_URL: str = os.getenv("VAJRA_AI_URL", "https://vajra-ai.vercel.app")
     AI_PROVIDER: str = os.getenv("AI_PROVIDER", "mock")
     AI_API_KEY: str = os.getenv("AI_API_KEY", "mock-key")
 

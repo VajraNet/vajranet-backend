@@ -21,10 +21,17 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Ensure database schema tables exist
-    logger.info("Initializing VajraNet database schema...")
-    Base.metadata.create_all(bind=engine)
-    logger.info("VajraNet backend ready for emergency coordination.")
+    # Startup: Ensure database schema tables exist gracefully
+    logger.info("Connecting to database and verifying VajraNet schema...")
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("VajraNet database schema verified and ready for emergency coordination.")
+    except Exception as exc:
+        logger.warning(
+            f"Database connection warning at boot: {exc}. "
+            "If using Supabase on Render/IPv4 hosts, ensure you use the Supabase Pooler URL "
+            "(port 6543 / pooler.supabase.com) instead of the direct IPv6 database host."
+        )
     yield
     # Shutdown
     logger.info("VajraNet backend shutting down gracefully.")
@@ -92,6 +99,20 @@ def health_check():
     Production health check endpoint for Render and uptime monitoring.
     """
     return {"status": "ok"}
+
+
+@app.get("/system/status", summary="System Status & Feature Flags", tags=["System Health"])
+def system_status():
+    """
+    Returns deployment environment status and feature flag toggles.
+    """
+    return {
+        "status": "operational",
+        "environment": settings.ENVIRONMENT,
+        "ai_enabled": settings.ENABLE_AI,
+        "ai_url": settings.VAJRA_AI_URL,
+        "cloudinary_enabled": settings.ENABLE_CLOUDINARY
+    }
 
 
 # Mount API v1
