@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, Any
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from app.models.sos import SOSSeverity, SOSStatus
 
 
@@ -13,10 +13,29 @@ class SOSCreate(BaseModel):
     origin_device_id: Optional[str] = Field(None, description="Originating device ID if known")
     locationName: Optional[str] = Field(None, description="Optional textual location name")
 
+    @field_validator("severity", mode="before")
+    @classmethod
+    def normalize_sos_severity(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            clean = v.strip().upper()
+            if clean in SOSSeverity.__members__:
+                return SOSSeverity[clean]
+            return SOSSeverity.CRITICAL
+        return v
+
 
 class SOSUpdate(BaseModel):
     status: Optional[SOSStatus] = None
     severity: Optional[SOSSeverity] = None
+
+    @field_validator("severity", mode="before")
+    @classmethod
+    def normalize_sos_update_severity(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            clean = v.strip().upper()
+            if clean in SOSSeverity.__members__:
+                return SOSSeverity[clean]
+        return v
 
 
 class SOSResponse(BaseModel):
