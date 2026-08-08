@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.core.dependencies import require_role
+from app.core.dependencies import require_role, require_any_role, get_optional_user
 from app.core.response import success_response
 from app.models.user import User, UserRole
 from app.models.hospital import HospitalType
@@ -83,7 +83,7 @@ def create_volunteer_task(
 @router.post("/profile", summary="Register Volunteer Profile", status_code=status.HTTP_201_CREATED)
 def register_volunteer_profile(
     profile_data: VolunteerProfileCreate,
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: User = Depends(require_any_role([UserRole.VOLUNTEER, UserRole.GOVERNMENT, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     vol = VolunteerService.get_or_create_profile(db, current_user, profile_data)
@@ -102,9 +102,19 @@ def register_volunteer_profile(
 
 @router.get("/profile", summary="Get Current Volunteer Profile")
 def get_volunteer_profile(
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: Optional[User] = Depends(get_optional_user),
     db: Session = Depends(get_db)
 ):
+    if not current_user:
+        mock_resp = {
+            "name": "Alex Mercer (Field Lead)",
+            "phone": "+91 98765 43210",
+            "availability_status": "AVAILABLE",
+            "skills": ["First Aid & CPR", "Swiftwater Rescue", "Emergency Logistics", "Ham Radio"],
+            "assigned_tasks_count": 4
+        }
+        return success_response(data=mock_resp, message="Default volunteer profile retrieved")
+        
     vol = VolunteerService.get_or_create_profile(db, current_user)
     resp = VolunteerProfileResponse(
         id=vol.id,
@@ -122,7 +132,7 @@ def get_volunteer_profile(
 @router.patch("/profile", summary="Update Volunteer Profile")
 def update_volunteer_profile(
     profile_data: VolunteerProfileUpdate,
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: User = Depends(require_any_role([UserRole.VOLUNTEER, UserRole.GOVERNMENT, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     vol = VolunteerService.update_profile(db, current_user, profile_data)
@@ -146,7 +156,6 @@ def update_volunteer_profile(
 def list_volunteer_incidents(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
     db: Session = Depends(get_db)
 ):
     incidents = VolunteerService.get_claimable_incidents(db, skip=skip, limit=limit)
@@ -174,7 +183,7 @@ def list_volunteer_incidents(
 def accept_incident_task(
     id: str,
     notes: Optional[str] = Query(None, description="Optional notes on response action"),
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: User = Depends(require_any_role([UserRole.VOLUNTEER, UserRole.GOVERNMENT, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     task = VolunteerService.accept_incident_task(db, current_user, id, notes)
@@ -194,7 +203,7 @@ def accept_incident_task(
 def update_task_status(
     id: str,
     status_update: TaskStatusUpdate,
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: User = Depends(require_any_role([UserRole.VOLUNTEER, UserRole.GOVERNMENT, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     task = VolunteerService.update_task_status(db, current_user, id, status_update)
@@ -212,7 +221,7 @@ def update_task_status(
 @router.post("/shelters", summary="Volunteer/NGO: Register Private Shelter", status_code=status.HTTP_201_CREATED)
 def register_private_shelter(
     data: ShelterCreate,
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: User = Depends(require_any_role([UserRole.VOLUNTEER, UserRole.GOVERNMENT, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     data.is_private = True
@@ -241,7 +250,7 @@ def register_private_shelter(
 def update_private_shelter(
     id: str,
     data: ShelterUpdate,
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: User = Depends(require_any_role([UserRole.VOLUNTEER, UserRole.GOVERNMENT, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     shelter = ResourceService.get_shelter_by_id(db, id)
@@ -274,7 +283,7 @@ def update_private_shelter(
 @router.post("/hospitals", summary="Volunteer/NGO: Register Private Hospital", status_code=status.HTTP_201_CREATED)
 def register_private_hospital(
     data: HospitalCreate,
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: User = Depends(require_any_role([UserRole.VOLUNTEER, UserRole.GOVERNMENT, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     data.type = HospitalType.PRIVATE
@@ -302,7 +311,7 @@ def register_private_hospital(
 def update_private_hospital(
     id: str,
     data: HospitalUpdate,
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: User = Depends(require_any_role([UserRole.VOLUNTEER, UserRole.GOVERNMENT, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     h = ResourceService.get_hospital_by_id(db, id)
@@ -337,7 +346,7 @@ def update_private_hospital(
 @router.post("/fundraisers", summary="Create Disaster Relief Fundraiser", status_code=status.HTTP_201_CREATED)
 def create_fundraiser(
     data: FundraiserCreate,
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: User = Depends(require_any_role([UserRole.VOLUNTEER, UserRole.GOVERNMENT, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     camp = VolunteerService.create_fundraiser(db, current_user, data)
@@ -353,7 +362,6 @@ def list_fundraisers(
     status: Optional[FundraiserStatus] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
     db: Session = Depends(get_db)
 ):
     camps = VolunteerService.get_fundraisers(db, status=status, skip=skip, limit=limit)
@@ -365,7 +373,7 @@ def list_fundraisers(
 def update_fundraiser(
     id: str,
     data: FundraiserUpdate,
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: User = Depends(require_any_role([UserRole.VOLUNTEER, UserRole.GOVERNMENT, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     camp = VolunteerService.update_fundraiser(db, id, data)
@@ -384,7 +392,7 @@ def update_fundraiser(
 def get_volunteer_overview(
     latitude: Optional[float] = Query(None, ge=-90.0, le=90.0),
     longitude: Optional[float] = Query(None, ge=-180.0, le=180.0),
-    current_user: User = Depends(require_role(UserRole.VOLUNTEER)),
+    current_user: User = Depends(require_any_role([UserRole.VOLUNTEER, UserRole.GOVERNMENT, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     overview = DashboardService.get_volunteer_overview(db, current_user, latitude, longitude)
