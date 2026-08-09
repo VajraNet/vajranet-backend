@@ -32,9 +32,25 @@ async def lifespan(app: FastAPI):
             "If using Supabase on Render/IPv4 hosts, ensure you use the Supabase Pooler URL "
             "(port 6543 / pooler.supabase.com) instead of the direct IPv6 database host."
         )
+
+    # Auto-seed: Populate demo data if DB is empty (idempotent)
+    try:
+        from app.db.seed import seed_database
+        from app.db.session import SessionLocal as _SessionLocal
+        db = _SessionLocal()
+        stats = seed_database(db)
+        if any(v > 0 for v in stats.values()):
+            logger.info(f"Database auto-seeded: {stats}")
+        else:
+            logger.info("Database already has data — skipping auto-seed.")
+        db.close()
+    except Exception as seed_exc:
+        logger.warning(f"Auto-seed skipped: {seed_exc}")
+
     yield
     # Shutdown
     logger.info("VajraNet backend shutting down gracefully.")
+
 
 
 app = FastAPI(
