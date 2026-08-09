@@ -92,8 +92,25 @@ async def generic_exception_handler(request: Request, exc: Exception):
     )
 
 
+# Root Endpoint (For UptimeRobot, Render Health Pings & Root Browsing)
+@app.get("/", summary="Root Health Endpoint", tags=["System Health"])
+@app.head("/", summary="Root Health Endpoint", tags=["System Health"])
+def root():
+    """
+    Root status endpoint returning 200 OK for UptimeRobot, Render, and uptime monitors.
+    """
+    return {
+        "status": "online",
+        "service": "VAJRANET Disaster Communication & Emergency Response API",
+        "version": settings.VERSION,
+        "docs": "/docs",
+        "health": "/health"
+    }
+
+
 # Health Check Endpoint
 @app.get("/health", summary="Health Check", tags=["System Health"])
+@app.head("/health", summary="Health Check", tags=["System Health"])
 def health_check():
     """
     Production health check endpoint for Render and uptime monitoring.
