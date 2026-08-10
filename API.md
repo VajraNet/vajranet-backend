@@ -233,9 +233,14 @@ All 4xx/5xx responses return:
 
 ---
 
-### 5.4 AI Disaster Assistant
+### 5.4 VajraAI Emergency Assistant
 #### `POST /api/v1/ai/chat`
-- **Request Body**:
+- **Auth**: None (Public access for emergency queries)
+- **Personas Supported**:
+  - **Citizen**: Safety instructions (floods, earthquakes, fires, cyclones), nearest shelter routing, official announcements.
+  - **Government EOC**: Situational data queries (e.g., *"Which areas currently have the highest number of SOS alerts?"*).
+  - **Volunteers**: Operational guidance (e.g., *"Show me nearby incidents requiring assistance"*).
+- **Request Body (Citizen Example)**:
 ```json
 {
   "message": "What should I do during sudden heavy flooding?",
@@ -248,8 +253,8 @@ All 4xx/5xx responses return:
 {
   "success": true,
   "data": {
-    "reply": "Flood Safety Advisory: Move to higher ground immediately...",
-    "safety_advisory": "NOTICE: This AI assistant provides safety information...",
+    "reply": "Flood Safety Advisory: Move to higher ground immediately. Do not attempt to walk, swim, or drive through floodwaters...",
+    "safety_advisory": "NOTICE: VajraAI assists human decision-makers by interpreting operational data and safety guidelines. It does not perform medical diagnosis, dispatch emergency vehicles directly, or replace human first responders.",
     "suggested_actions": [
       "Find nearby high-ground shelters",
       "Trigger SOS if trapped",
@@ -260,3 +265,27 @@ All 4xx/5xx responses return:
   "message": "AI safety response generated successfully"
 }
 ```
+- **Request Body (Government Example)**:
+```json
+{
+  "message": "Which areas currently have the highest number of SOS alerts?"
+}
+```
+- **Response `200 OK`**:
+```json
+{
+  "success": true,
+  "data": {
+    "reply": "Situational Awareness Summary: Currently tracking 14 active SOS alerts (6 CRITICAL priority) and 8 ongoing disaster incidents...",
+    "safety_advisory": "NOTICE: VajraAI assists human decision-makers by interpreting operational data and safety guidelines...",
+    "suggested_actions": [
+      "Filter CRITICAL SOS alerts on map",
+      "Publish area evacuation announcement",
+      "Review open rescue incidents"
+    ],
+    "active_announcements_count": 2
+  },
+  "message": "AI safety response generated successfully"
+}
+```
+

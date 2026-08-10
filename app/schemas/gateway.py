@@ -14,7 +14,7 @@ class GatewayEventItem(BaseModel):
 
 class GatewaySyncRequest(BaseModel):
     gateway_id: str = Field(..., min_length=2, max_length=100, description="Identifier of the gateway forwarding offline events")
-    events: List[GatewayEventItem] = Field(default_factory=list, description="List of offline events to synchronize")
+    events: List[GatewayEventItem] = Field(..., min_length=1, description="List of offline events to synchronize")
 
 
 class GatewaySyncResponse(BaseModel):
