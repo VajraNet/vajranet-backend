@@ -24,14 +24,13 @@ async def lifespan(app: FastAPI):
     # Startup: Ensure database schema tables exist gracefully
     logger.info("Connecting to database and verifying VajraNet schema...")
     try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("VajraNet database schema verified and ready for emergency coordination.")
+        if settings.DATABASE_URL.startswith("sqlite"):
+            Base.metadata.create_all(bind=engine)
+            logger.info("Local SQLite database schema verified.")
+        else:
+            logger.info("Connected to remote PostgreSQL / Supabase database.")
     except Exception as exc:
-        logger.warning(
-            f"Database connection warning at boot: {exc}. "
-            "If using Supabase on Render/IPv4 hosts, ensure you use the Supabase Pooler URL "
-            "(port 6543 / pooler.supabase.com) instead of the direct IPv6 database host."
-        )
+        logger.warning(f"Database connection warning at boot: {exc}")
     yield
     # Shutdown
     logger.info("VajraNet backend shutting down gracefully.")

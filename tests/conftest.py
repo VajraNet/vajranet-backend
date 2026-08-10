@@ -10,6 +10,7 @@ from app.main import app
 
 # Use a test SQLite database
 TEST_DATABASE_URL = "sqlite:///./test_vajranet.db"
+settings.DATABASE_URL = TEST_DATABASE_URL
 
 test_engine = create_engine(
     TEST_DATABASE_URL,
