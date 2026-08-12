@@ -1,4 +1,4 @@
-from typing import List
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -9,6 +9,21 @@ from app.schemas.sos import SOSCreate, SOSResponse
 from app.services.sos_service import SOSService
 
 router = APIRouter(prefix="/sos", tags=["SOS Alerts"])
+
+
+@router.get("", summary="List All Active SOS Alerts")
+def list_sos(
+    status: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    """
+    Returns active emergency SOS alerts for tactical live feeds, map markers, and responders.
+    """
+    sos_list = SOSService.get_all_sos(db, status_filter=status, skip=skip, limit=limit)
+    response_data = [SOSResponse.model_validate(s) for s in sos_list]
+    return success_response(data=response_data, message=f"Retrieved {len(response_data)} SOS alerts")
 
 
 @router.post("", summary="Create Emergency SOS Alert", status_code=status.HTTP_201_CREATED)

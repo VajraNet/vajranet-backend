@@ -8,7 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.core.response import error_response
 from app.api.router import api_router
-from app.db.session import engine
+from app.db import session as db_session
 from app.models.base import Base
 
 # Configure logging
@@ -24,11 +24,8 @@ async def lifespan(app: FastAPI):
     # Startup: Ensure database schema tables exist gracefully
     logger.info("Connecting to database and verifying VajraNet schema...")
     try:
-        if settings.DATABASE_URL.startswith("sqlite"):
-            Base.metadata.create_all(bind=engine)
-            logger.info("Local SQLite database schema verified.")
-        else:
-            logger.info("Connected to remote PostgreSQL / Supabase database.")
+        Base.metadata.create_all(bind=db_session.engine)
+        logger.info("Database schema verified.")
     except Exception as exc:
         logger.warning(f"Database connection warning at boot: {exc}")
     yield
@@ -52,10 +49,23 @@ app = FastAPI(
 # Configure CORS for All Local and Deployed Frontends
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=[
+        "https://vajranet.onrender.com",
+        "https://vajranet-backend.onrender.com",
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:5173",
+        "http://localhost",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:5173",
+        "capacitor://localhost"
+    ],
     allow_origin_regex=r"https?://.*|capacitor://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 

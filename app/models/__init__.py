@@ -10,6 +10,7 @@ from app.models.volunteer import Volunteer, VolunteerTask, VolunteerAvailability
 from app.models.fundraiser import FundraisingCampaign, FundraiserStatus
 from app.models.device import Device
 from app.models.offline_event import OfflineEvent, OfflineEventType, OfflineEventStatus
+from app.models.emergency_contact import EmergencyContact
 
 __all__ = [
     "Base",
@@ -43,4 +44,5 @@ __all__ = [
     "OfflineEvent",
     "OfflineEventType",
     "OfflineEventStatus",
+    "EmergencyContact",
 ]

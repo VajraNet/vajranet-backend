@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, Integer, DateTime, ForeignKey
+from sqlalchemy import String, Integer, DateTime, ForeignKey, Float
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, generate_uuid, get_utc_now
 
@@ -15,6 +15,8 @@ class Device(Base):
     last_seen_at: Mapped[datetime] = mapped_column(DateTime, default=get_utc_now, nullable=False)
     battery_level: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     mesh_hop_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=get_utc_now, nullable=False)
 
     owner = relationship("User", foreign_keys=[owner_id])

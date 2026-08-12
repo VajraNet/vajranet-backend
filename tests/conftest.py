@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 from app.db.session import get_db
+from app.db import session as db_session_module
 from app.models.base import Base
 from app.main import app
 
@@ -16,6 +17,9 @@ test_engine = create_engine(
     TEST_DATABASE_URL,
     connect_args={"check_same_thread": False}
 )
+
+db_session_module.engine = test_engine
+db_session_module.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 

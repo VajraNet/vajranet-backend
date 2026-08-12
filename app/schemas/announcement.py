@@ -31,6 +31,6 @@ class AnnouncementResponse(BaseModel):
     type: AnnouncementType
     area: Optional[str] = None
     priority: AnnouncementPriority
-    created_by: str
+    created_by: Optional[str] = None
     created_at: datetime
     expires_at: Optional[datetime] = None

@@ -129,6 +129,21 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
 
 -- -----------------------------------------------------------------------------
+-- 1B. EMERGENCY CONTACTS
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS emergency_contacts (
+    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    relation VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_emergency_contacts_user_id ON emergency_contacts(user_id);
+
+-- -----------------------------------------------------------------------------
 -- 2. SOS ALERTS
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sos_alerts (
@@ -314,6 +329,8 @@ CREATE TABLE IF NOT EXISTS devices (
     last_seen_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     battery_level INT,
     mesh_hop_count INT NOT NULL DEFAULT 0,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
