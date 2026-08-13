@@ -3,7 +3,8 @@ from app.api.v1 import (
     auth, citizen, sos, incidents, shelters,
     hospitals, relief_centers, announcements,
     government, volunteers, gateway, devices,
-    media, ai, resources, emergency_contacts
+    media, ai, resources, emergency_contacts,
+    trusted_devices
 )
 
 api_router = APIRouter(prefix="/api/v1")
@@ -25,3 +26,4 @@ api_router.include_router(media.router)
 api_router.include_router(ai.router)
 api_router.include_router(resources.router)
 api_router.include_router(emergency_contacts.router)
+api_router.include_router(trusted_devices.router)

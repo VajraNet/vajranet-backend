@@ -11,6 +11,7 @@ from app.models.fundraiser import FundraisingCampaign, FundraiserStatus
 from app.models.device import Device
 from app.models.offline_event import OfflineEvent, OfflineEventType, OfflineEventStatus
 from app.models.emergency_contact import EmergencyContact
+from app.models.trusted_device import TrustedDevice
 
 __all__ = [
     "Base",
