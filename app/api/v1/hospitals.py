@@ -50,7 +50,12 @@ def get_nearby_hospitals(
     if latitude is None or longitude is None:
         return list_hospitals(db=db)
 
-    effective_radius = radius_km or radius or 15.0
+    effective_radius = 15.0
+    if isinstance(radius_km, (int, float)):
+        effective_radius = float(radius_km)
+    elif isinstance(radius, (int, float)):
+        effective_radius = float(radius)
+
     hospitals = ResourceService.get_nearby_hospitals(db, latitude, longitude, effective_radius)
     return success_response(data=hospitals, message=f"Found {len(hospitals)} hospitals within {effective_radius} km")
 

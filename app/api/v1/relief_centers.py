@@ -47,7 +47,12 @@ def get_nearby_relief_centers(
     if latitude is None or longitude is None:
         return list_relief_centers(db=db)
 
-    effective_radius = radius_km or radius or 15.0
+    effective_radius = 15.0
+    if isinstance(radius_km, (int, float)):
+        effective_radius = float(radius_km)
+    elif isinstance(radius, (int, float)):
+        effective_radius = float(radius)
+
     centers = ResourceService.get_nearby_relief_centers(db, latitude, longitude, effective_radius)
     return success_response(data=centers, message=f"Found {len(centers)} relief centers within {effective_radius} km")
 

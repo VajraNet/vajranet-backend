@@ -51,7 +51,12 @@ def get_nearby_shelters(
     if latitude is None or longitude is None:
         return list_shelters(db=db)
 
-    effective_radius = radius_km or radius or 15.0
+    effective_radius = 15.0
+    if isinstance(radius_km, (int, float)):
+        effective_radius = float(radius_km)
+    elif isinstance(radius, (int, float)):
+        effective_radius = float(radius)
+
     shelters = ResourceService.get_nearby_shelters(db, latitude, longitude, effective_radius)
     return success_response(data=shelters, message=f"Found {len(shelters)} shelters within {effective_radius} km")
 
