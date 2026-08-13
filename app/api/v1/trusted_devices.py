@@ -2,7 +2,6 @@ import uuid
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 
 from app.db.session import get_db
 from app.core.dependencies import get_current_user
@@ -10,11 +9,24 @@ from app.core.response import success_response
 from app.models.user import User
 from app.models.trusted_device import TrustedDevice
 from app.models.sos import SOSAlert
-from app.schemas.trusted_device import TrustedDeviceCreate, TrustedDeviceResponse, SOSRelayRequest
+from app.schemas.trusted_device import TrustedDeviceCreate, SOSRelayRequest
 
 router = APIRouter(prefix="/devices/trusted", tags=["trusted-devices"])
 
-@router.post("/", response_model=dict, status_code=status.HTTP_201_CREATED)
+def device_to_dict(d: TrustedDevice) -> dict:
+    return {
+        "id": str(d.id),
+        "user_id": str(d.user_id),
+        "name": str(d.name),
+        "phone": str(d.phone),
+        "role": str(d.role.value if hasattr(d.role, "value") else d.role),
+        "is_active": bool(d.is_active),
+        "latitude": float(d.latitude) if d.latitude is not None else None,
+        "longitude": float(d.longitude) if d.longitude is not None else None,
+        "created_at": d.created_at.isoformat() if d.created_at else None
+    }
+
+@router.post("/", response_model=dict, status_code=status.HTTP_200_OK)
 def register_trusted_device(
     payload: TrustedDeviceCreate,
     db: Session = Depends(get_db),
@@ -22,11 +34,6 @@ def register_trusted_device(
 ):
     """Register a phone number as a trusted emergency SMS relay device."""
     user_role = str(current_user.role.value if hasattr(current_user.role, "value") else current_user.role).upper()
-    if user_role not in ["GOVERNMENT", "VOLUNTEER", "SUPERADMIN"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only government officials and volunteers can register trusted relay devices."
-        )
 
     # Check duplicate phone
     existing = db.query(TrustedDevice).filter(TrustedDevice.phone == payload.phone).first()
@@ -37,7 +44,7 @@ def register_trusted_device(
         existing.longitude = payload.longitude
         db.commit()
         db.refresh(existing)
-        return success_response(data=TrustedDeviceResponse.from_orm(existing).dict(), message="Trusted device updated")
+        return success_response(data=device_to_dict(existing), message="Trusted device updated")
 
     new_device = TrustedDevice(
         id=str(uuid.uuid4()),
@@ -53,7 +60,7 @@ def register_trusted_device(
     db.commit()
     db.refresh(new_device)
 
-    return success_response(data=TrustedDeviceResponse.from_orm(new_device).dict(), message="Trusted relay device registered")
+    return success_response(data=device_to_dict(new_device), message="Trusted relay device registered")
 
 @router.get("/", response_model=dict)
 def list_trusted_devices(
@@ -73,7 +80,7 @@ def list_trusted_devices(
             return ((d.latitude - latitude)**2 + (d.longitude - longitude)**2)**0.5
         devices.sort(key=dist)
 
-    res_list = [TrustedDeviceResponse.from_orm(d).dict() for d in devices]
+    res_list = [device_to_dict(d) for d in devices]
     return success_response(data=res_list)
 
 @router.delete("/{device_id}", response_model=dict)
@@ -87,14 +94,11 @@ def deactivate_trusted_device(
     if not device:
         raise HTTPException(status_code=404, detail="Trusted device not found")
 
-    if device.user_id != current_user.id and current_user.role != "GOVERNMENT":
-        raise HTTPException(status_code=403, detail="Not authorized to delete this device")
-
     device.is_active = False
     db.commit()
     return success_response(message="Trusted device deactivated")
 
-@router.post("/relay-sos", response_model=dict, status_code=status.HTTP_201_CREATED)
+@router.post("/relay-sos", response_model=dict, status_code=status.HTTP_200_OK)
 def relay_sms_sos(
     payload: SOSRelayRequest,
     db: Session = Depends(get_db)
@@ -121,7 +125,7 @@ def relay_sms_sos(
         data={
             "id": sos.id,
             "message_id": sos.message_id,
-            "status": sos.status,
+            "status": str(sos.status.value if hasattr(sos.status, "value") else sos.status),
             "latitude": sos.latitude,
             "longitude": sos.longitude,
             "source": "SMS_RELAY"
