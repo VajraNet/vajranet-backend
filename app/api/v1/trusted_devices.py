@@ -20,8 +20,9 @@ def register_trusted_device(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Register a phone number as a trusted emergency SMS relay device (GOVERNMENT or VOLUNTEER only)."""
-    if current_user.role not in ["GOVERNMENT", "VOLUNTEER", "SUPERADMIN"]:
+    """Register a phone number as a trusted emergency SMS relay device."""
+    user_role = str(current_user.role.value if hasattr(current_user.role, "value") else current_user.role).upper()
+    if user_role not in ["GOVERNMENT", "VOLUNTEER", "SUPERADMIN"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only government officials and volunteers can register trusted relay devices."
@@ -43,7 +44,7 @@ def register_trusted_device(
         user_id=current_user.id,
         name=payload.name,
         phone=payload.phone,
-        role=payload.role or current_user.role,
+        role=payload.role or user_role,
         latitude=payload.latitude,
         longitude=payload.longitude,
         is_active=True
