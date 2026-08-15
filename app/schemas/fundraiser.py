@@ -5,10 +5,11 @@ from app.models.fundraiser import FundraiserStatus
 
 
 class FundraiserCreate(BaseModel):
-    title: str = Field(..., min_length=3, max_length=255)
-    description: str = Field(..., min_length=10)
-    target_amount: float = Field(..., gt=0)
-    beneficiary: str = Field(..., min_length=2, max_length=255)
+    title: str = Field(..., min_length=1, max_length=255)
+    description: str = Field(default="Emergency disaster relief fund", min_length=1)
+    target_amount: float = Field(default=50000.0, gt=0)
+    beneficiary: Optional[str] = Field(default="Disaster Relief Victims", min_length=1, max_length=255)
+    raised_amount: Optional[float] = Field(default=0.0, ge=0)
 
 
 class FundraiserUpdate(BaseModel):
