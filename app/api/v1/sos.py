@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.core.dependencies import get_current_user, get_optional_user
 from app.core.response import success_response
+from app.models.sos import SOSAlert
 from app.models.user import User, UserRole
 from app.schemas.sos import SOSCreate, SOSUpdate, SOSResponse
 from app.services.sos_service import SOSService
@@ -103,4 +104,24 @@ def update_sos(
             detail=f"SOS alert with ID {id} was not found"
         )
     return success_response(data=SOSResponse.model_validate(sos), message="SOS alert updated successfully")
+
+
+@router.delete("/{id}", summary="Delete or Purge Resolved SOS Alert")
+def delete_sos(
+    id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Permanently deletes a resolved or redundant emergency SOS alert from the database.
+    """
+    sos = db.query(SOSAlert).filter(SOSAlert.id == id).first()
+    if not sos:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"SOS alert with ID {id} was not found"
+        )
+    db.delete(sos)
+    db.commit()
+    return success_response(data={"id": id, "deleted": True}, message="SOS alert removed from database")
+
 

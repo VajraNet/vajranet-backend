@@ -5,7 +5,7 @@ from app.db.session import get_db
 from app.core.dependencies import get_current_user, get_optional_user
 from app.core.response import success_response
 from app.models.user import User
-from app.models.incident import IncidentType, IncidentSeverity, IncidentStatus
+from app.models.incident import Incident, IncidentType, IncidentSeverity, IncidentStatus
 from app.schemas.incident import IncidentCreate, IncidentUpdate, IncidentResponse
 from app.services.incident_service import IncidentService
 
@@ -172,4 +172,24 @@ def update_incident(
         updated_at=incident.updated_at
     )
     return success_response(data=response_data, message="Incident updated successfully")
+
+
+@router.delete("/{id}", summary="Delete or Purge Resolved Incident")
+def delete_incident(
+    id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Permanently deletes a resolved incident report from the database.
+    """
+    incident = db.query(Incident).filter(Incident.id == id).first()
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Incident with ID {id} was not found"
+        )
+    db.delete(incident)
+    db.commit()
+    return success_response(data={"id": id, "deleted": True}, message="Incident removed from database")
+
 
