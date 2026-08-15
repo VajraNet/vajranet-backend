@@ -2,8 +2,10 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
+from app.core.dependencies import get_optional_user
 from app.core.response import success_response
-from app.schemas.shelter import ShelterResponse
+from app.models.user import User
+from app.schemas.shelter import ShelterCreate, ShelterUpdate, ShelterResponse
 from app.services.resource_service import ResourceService
 
 router = APIRouter(prefix="/shelters", tags=["Shelters & Evacuation"])
@@ -93,3 +95,69 @@ def get_shelter_by_id(
         updated_at=shelter.updated_at
     )
     return success_response(data=resp, message="Shelter details retrieved")
+
+
+@router.post("", summary="Create Emergency Shelter", status_code=status.HTTP_201_CREATED)
+def create_shelter(
+    data: ShelterCreate,
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Registers a new government or private disaster shelter.
+    """
+    shelter = ResourceService.create_shelter(db, data, current_user)
+    available_cap = max(0, shelter.capacity - shelter.occupied)
+    resp = ShelterResponse(
+        id=shelter.id,
+        name=shelter.name,
+        description=shelter.description,
+        latitude=shelter.latitude,
+        longitude=shelter.longitude,
+        address=shelter.address,
+        capacity=shelter.capacity,
+        occupied=shelter.occupied,
+        available_capacity=available_cap,
+        status=shelter.status,
+        is_private=shelter.is_private,
+        managed_by=shelter.managed_by,
+        created_at=shelter.created_at,
+        updated_at=shelter.updated_at
+    )
+    return success_response(data=resp, message="Shelter created successfully", status_code=status.HTTP_201_CREATED)
+
+
+@router.patch("/{id}", summary="Update Shelter Details or Capacity")
+def update_shelter(
+    id: str,
+    data: ShelterUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    Updates status, occupied count, or total capacity of a disaster shelter.
+    """
+    shelter = ResourceService.update_shelter(db, id, data)
+    if not shelter:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Shelter with ID {id} was not found"
+        )
+    available_cap = max(0, shelter.capacity - shelter.occupied)
+    resp = ShelterResponse(
+        id=shelter.id,
+        name=shelter.name,
+        description=shelter.description,
+        latitude=shelter.latitude,
+        longitude=shelter.longitude,
+        address=shelter.address,
+        capacity=shelter.capacity,
+        occupied=shelter.occupied,
+        available_capacity=available_cap,
+        status=shelter.status,
+        is_private=shelter.is_private,
+        managed_by=shelter.managed_by,
+        created_at=shelter.created_at,
+        updated_at=shelter.updated_at
+    )
+    return success_response(data=resp, message="Shelter updated successfully")
+

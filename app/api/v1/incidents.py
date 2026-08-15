@@ -6,7 +6,7 @@ from app.core.dependencies import get_current_user, get_optional_user
 from app.core.response import success_response
 from app.models.user import User
 from app.models.incident import IncidentType, IncidentSeverity, IncidentStatus
-from app.schemas.incident import IncidentCreate, IncidentResponse
+from app.schemas.incident import IncidentCreate, IncidentUpdate, IncidentResponse
 from app.services.incident_service import IncidentService
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
@@ -139,3 +139,37 @@ def get_incident_by_id(
         updated_at=incident.updated_at
     )
     return success_response(data=response_data, message="Incident details retrieved")
+
+
+@router.patch("/{id}", summary="Update Incident Details or Status")
+def update_incident(
+    id: str,
+    update_data: IncidentUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    Updates status, severity, or description of a disaster incident report.
+    """
+    incident = IncidentService.update_incident(db, id, update_data)
+    if not incident:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Incident with ID {id} was not found"
+        )
+    response_data = IncidentResponse(
+        id=incident.id,
+        message_id=incident.message_id,
+        reported_by=incident.reported_by,
+        title=incident.title,
+        description=incident.description,
+        type=incident.type,
+        latitude=incident.latitude,
+        longitude=incident.longitude,
+        severity=incident.severity,
+        status=incident.status,
+        media_urls=incident.media_urls,
+        created_at=incident.created_at,
+        updated_at=incident.updated_at
+    )
+    return success_response(data=response_data, message="Incident updated successfully")
+

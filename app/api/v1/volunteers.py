@@ -33,6 +33,33 @@ class VolunteerTaskCreate(BaseModel):
 
 
 # -----------------------------------------------------------------
+# VOLUNTEER LIST / ROOT
+# -----------------------------------------------------------------
+@router.get("", summary="List All Registered Field Volunteers")
+def list_all_volunteers(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns list of active volunteers and responder squads.
+    """
+    volunteers = db.query(User).filter(User.role == UserRole.VOLUNTEER).offset(skip).limit(limit).all()
+    results = []
+    for v in volunteers:
+        results.append({
+            "id": v.id,
+            "name": v.name or "Field Responder",
+            "role": v.role.value if hasattr(v.role, 'value') else str(v.role),
+            "email": v.email,
+            "phone": v.phone,
+            "is_verified": v.is_verified,
+            "created_at": v.created_at
+        })
+    return success_response(data=results, message=f"Retrieved {len(results)} registered volunteers")
+
+
+# -----------------------------------------------------------------
 # VOLUNTEER TASKS & INCIDENTS
 # -----------------------------------------------------------------
 @router.get("/tasks", summary="List Volunteer Response Tasks")

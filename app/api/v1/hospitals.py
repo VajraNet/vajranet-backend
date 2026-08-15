@@ -2,8 +2,10 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
+from app.core.dependencies import get_optional_user
 from app.core.response import success_response
-from app.schemas.hospital import HospitalResponse
+from app.models.user import User
+from app.schemas.hospital import HospitalCreate, HospitalUpdate, HospitalResponse
 from app.services.resource_service import ResourceService
 
 router = APIRouter(prefix="/hospitals", tags=["Hospitals & Emergency Medical"])
@@ -91,3 +93,67 @@ def get_hospital_by_id(
         updated_at=h.updated_at
     )
     return success_response(data=resp, message="Hospital details retrieved")
+
+
+@router.post("", summary="Create Hospital Facility", status_code=status.HTTP_201_CREATED)
+def create_hospital(
+    data: HospitalCreate,
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Registers a new government, private, or military hospital.
+    """
+    h = ResourceService.create_hospital(db, data, current_user)
+    resp = HospitalResponse(
+        id=h.id,
+        name=h.name,
+        type=h.type,
+        latitude=h.latitude,
+        longitude=h.longitude,
+        address=h.address,
+        emergency_available=h.emergency_available,
+        total_beds=h.total_beds,
+        available_beds=h.available_beds,
+        icu_total=h.icu_total,
+        icu_available=h.icu_available,
+        managed_by=h.managed_by,
+        created_at=h.created_at,
+        updated_at=h.updated_at
+    )
+    return success_response(data=resp, message="Hospital created successfully", status_code=status.HTTP_201_CREATED)
+
+
+@router.patch("/{id}", summary="Update Hospital Capacity and Availability")
+def update_hospital(
+    id: str,
+    data: HospitalUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    Updates available bed count, ICU availability, or emergency intake status.
+    """
+    h = ResourceService.update_hospital(db, id, data)
+    if not h:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Hospital with ID {id} was not found"
+        )
+    resp = HospitalResponse(
+        id=h.id,
+        name=h.name,
+        type=h.type,
+        latitude=h.latitude,
+        longitude=h.longitude,
+        address=h.address,
+        emergency_available=h.emergency_available,
+        total_beds=h.total_beds,
+        available_beds=h.available_beds,
+        icu_total=h.icu_total,
+        icu_available=h.icu_available,
+        managed_by=h.managed_by,
+        created_at=h.created_at,
+        updated_at=h.updated_at
+    )
+    return success_response(data=resp, message="Hospital updated successfully")
+

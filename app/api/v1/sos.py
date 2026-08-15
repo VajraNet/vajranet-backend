@@ -5,7 +5,7 @@ from app.db.session import get_db
 from app.core.dependencies import get_current_user, get_optional_user
 from app.core.response import success_response
 from app.models.user import User, UserRole
-from app.schemas.sos import SOSCreate, SOSResponse
+from app.schemas.sos import SOSCreate, SOSUpdate, SOSResponse
 from app.services.sos_service import SOSService
 
 router = APIRouter(prefix="/sos", tags=["SOS Alerts"])
@@ -15,7 +15,7 @@ router = APIRouter(prefix="/sos", tags=["SOS Alerts"])
 def list_sos(
     status: Optional[str] = None,
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 500,
     db: Session = Depends(get_db)
 ):
     """
@@ -85,3 +85,22 @@ def get_sos_by_id(
 
     response_data = SOSResponse.model_validate(sos)
     return success_response(data=response_data, message="SOS details retrieved")
+
+
+@router.patch("/{id}", summary="Update SOS Alert Status")
+def update_sos(
+    id: str,
+    update_data: SOSUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    Updates status or severity of an emergency SOS alert.
+    """
+    sos = SOSService.update_sos(db, id, update_data)
+    if not sos:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"SOS alert with ID {id} was not found"
+        )
+    return success_response(data=SOSResponse.model_validate(sos), message="SOS alert updated successfully")
+

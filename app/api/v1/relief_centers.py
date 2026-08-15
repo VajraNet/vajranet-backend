@@ -2,8 +2,10 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
+from app.core.dependencies import get_optional_user
 from app.core.response import success_response
-from app.schemas.relief_center import ReliefCenterResponse
+from app.models.user import User
+from app.schemas.relief_center import ReliefCenterCreate, ReliefCenterUpdate, ReliefCenterResponse
 from app.services.resource_service import ResourceService
 
 router = APIRouter(prefix="/relief-centers", tags=["Relief & Supply Centers"])
@@ -85,3 +87,61 @@ def get_relief_center_by_id(
         updated_at=rc.updated_at
     )
     return success_response(data=resp, message="Relief center details retrieved")
+
+
+@router.post("", summary="Create Relief Distribution Center", status_code=status.HTTP_201_CREATED)
+def create_relief_center(
+    data: ReliefCenterCreate,
+    current_user: Optional[User] = Depends(get_optional_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Registers a new relief supplies distribution depot.
+    """
+    rc = ResourceService.create_relief_center(db, data, current_user)
+    resp = ReliefCenterResponse(
+        id=rc.id,
+        name=rc.name,
+        description=rc.description,
+        latitude=rc.latitude,
+        longitude=rc.longitude,
+        address=rc.address,
+        items_available=rc.items_available,
+        status=rc.status,
+        managed_by=rc.managed_by,
+        created_at=rc.created_at,
+        updated_at=rc.updated_at
+    )
+    return success_response(data=resp, message="Relief center created successfully", status_code=status.HTTP_201_CREATED)
+
+
+@router.patch("/{id}", summary="Update Relief Center Details or Status")
+def update_relief_center(
+    id: str,
+    data: ReliefCenterUpdate,
+    db: Session = Depends(get_db)
+):
+    """
+    Updates available supplies, description, or operational status of a relief center.
+    """
+    rc = ResourceService.update_relief_center(db, id, data)
+    if not rc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Relief center with ID {id} was not found"
+        )
+    resp = ReliefCenterResponse(
+        id=rc.id,
+        name=rc.name,
+        description=rc.description,
+        latitude=rc.latitude,
+        longitude=rc.longitude,
+        address=rc.address,
+        items_available=rc.items_available,
+        status=rc.status,
+        managed_by=rc.managed_by,
+        created_at=rc.created_at,
+        updated_at=rc.updated_at
+    )
+    return success_response(data=resp, message="Relief center updated successfully")
+
