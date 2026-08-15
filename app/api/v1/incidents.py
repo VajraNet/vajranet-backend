@@ -51,7 +51,7 @@ def list_all_incidents(
     severity: Optional[IncidentSeverity] = Query(None),
     status: Optional[IncidentStatus] = Query(None),
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = Query(2000, ge=1, le=5000),
     db: Session = Depends(get_db)
 ):
     """

@@ -53,14 +53,17 @@ class SOSService:
         status_filter: Optional[SOSStatus] = None,
         severity_filter: Optional[SOSSeverity] = None,
         skip: int = 0,
-        limit: int = 100
+        limit: Optional[int] = 1000
     ) -> List[SOSAlert]:
         query = db.query(SOSAlert)
         if status_filter:
             query = query.filter(SOSAlert.status == status_filter)
         if severity_filter:
             query = query.filter(SOSAlert.severity == severity_filter)
-        return query.order_by(SOSAlert.created_at.desc()).offset(skip).limit(limit).all()
+        query = query.order_by(SOSAlert.created_at.desc()).offset(skip)
+        if limit:
+            query = query.limit(limit)
+        return query.all()
 
     @staticmethod
     def update_sos(db: Session, sos_id: str, update_data: SOSUpdate) -> Optional[SOSAlert]:

@@ -15,7 +15,7 @@ router = APIRouter(prefix="/sos", tags=["SOS Alerts"])
 def list_sos(
     status: Optional[str] = None,
     skip: int = 0,
-    limit: int = 500,
+    limit: int = 2000,
     db: Session = Depends(get_db)
 ):
     """
