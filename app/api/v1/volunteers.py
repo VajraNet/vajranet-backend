@@ -6,6 +6,8 @@ from app.db.session import get_db
 from app.core.dependencies import require_role, require_any_role, get_optional_user
 from app.core.response import success_response
 from app.models.user import User, UserRole
+from app.models.incident import Incident, IncidentStatus
+from app.models.volunteer import Volunteer, VolunteerTask, TaskStatus
 from app.models.hospital import HospitalType
 from app.models.fundraiser import FundraiserStatus
 from app.schemas.volunteer import (
