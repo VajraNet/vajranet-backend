@@ -104,6 +104,49 @@ def create_volunteer_task(
     return success_response(data=created_task, message="Task created successfully", status_code=status.HTTP_201_CREATED)
 
 
+@router.patch("/tasks/{id}", summary="Update Task Status Directly")
+def update_volunteer_task_direct(
+    id: str,
+    status_update: dict,
+    db: Session = Depends(get_db)
+):
+    """
+    Directly updates the status of a volunteer response task or linked incident.
+    """
+    raw_status = str(status_update.get("status", "IN_PROGRESS")).upper()
+
+    # 1. Update Incident if ID matches
+    incident = db.query(Incident).filter(Incident.id == id).first()
+    if incident:
+        if raw_status in ["COMPLETED", "RESOLVED"]:
+            incident.status = IncidentStatus.RESOLVED
+        elif raw_status in ["IN_PROGRESS", "ACCEPTED"]:
+            incident.status = IncidentStatus.IN_PROGRESS
+        else:
+            incident.status = IncidentStatus.REPORTED
+        db.commit()
+        db.refresh(incident)
+        return success_response(
+            data={"id": incident.id, "status": incident.status.value},
+            message="Task status updated successfully"
+        )
+
+    # 2. Update VolunteerTask table if present
+    task = db.query(VolunteerTask).filter((VolunteerTask.id == id) | (VolunteerTask.incident_id == id)).first()
+    if task:
+        if raw_status in ["COMPLETED", "RESOLVED"]:
+            task.status = TaskStatus.COMPLETED
+        elif raw_status in ["IN_PROGRESS", "ACCEPTED"]:
+            task.status = TaskStatus.IN_PROGRESS
+        else:
+            task.status = TaskStatus.ASSIGNED
+        db.commit()
+        db.refresh(task)
+        return success_response(data={"id": task.id, "status": task.status.value}, message="Task status updated successfully")
+
+    return success_response(data={"id": id, "status": raw_status}, message="Task status recorded")
+
+
 # -----------------------------------------------------------------
 # VOLUNTEER PROFILE
 # -----------------------------------------------------------------

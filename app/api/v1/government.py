@@ -2,7 +2,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
-from app.core.dependencies import require_role
+from app.core.dependencies import require_role, require_any_role
 from app.core.response import success_response
 from app.models.user import User, UserRole
 from app.models.sos import SOSSeverity, SOSStatus
@@ -32,7 +32,7 @@ def list_government_sos(
     severity: Optional[SOSSeverity] = Query(None, description="Filter by severity: LOW, MEDIUM, HIGH, CRITICAL"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    current_user: User = Depends(require_role(UserRole.GOVERNMENT)),
+    current_user: User = Depends(require_any_role([UserRole.GOVERNMENT, UserRole.VOLUNTEER, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     sos_alerts = SOSService.get_all_sos(db, status_filter=status, severity_filter=severity, skip=skip, limit=limit)
@@ -40,11 +40,11 @@ def list_government_sos(
     return success_response(data=response_data, message=f"Retrieved {len(response_data)} SOS alerts")
 
 
-@router.patch("/sos/{id}", summary="Government: Update SOS Status or Severity")
+@router.patch("/sos/{id}", summary="Government & Responder: Update SOS Status or Severity")
 def update_government_sos(
     id: str,
     update_data: SOSUpdate,
-    current_user: User = Depends(require_role(UserRole.GOVERNMENT)),
+    current_user: User = Depends(require_any_role([UserRole.GOVERNMENT, UserRole.VOLUNTEER, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     sos = SOSService.update_sos(db, id, update_data)
@@ -66,7 +66,7 @@ def list_government_incidents(
     status: Optional[IncidentStatus] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    current_user: User = Depends(require_role(UserRole.GOVERNMENT)),
+    current_user: User = Depends(require_any_role([UserRole.GOVERNMENT, UserRole.VOLUNTEER, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     incidents = IncidentService.get_all_incidents(
@@ -92,11 +92,11 @@ def list_government_incidents(
     return success_response(data=response_data, message=f"Retrieved {len(response_data)} incidents")
 
 
-@router.patch("/incidents/{id}", summary="Government: Update Incident Status or Severity")
+@router.patch("/incidents/{id}", summary="Government & Responder: Update Incident Status or Severity")
 def update_government_incident(
     id: str,
     update_data: IncidentUpdate,
-    current_user: User = Depends(require_role(UserRole.GOVERNMENT)),
+    current_user: User = Depends(require_any_role([UserRole.GOVERNMENT, UserRole.VOLUNTEER, UserRole.ADMIN])),
     db: Session = Depends(get_db)
 ):
     inc = IncidentService.update_incident(db, id, update_data)
