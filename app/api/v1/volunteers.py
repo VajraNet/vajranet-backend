@@ -55,7 +55,7 @@ def list_all_volunteers(
             "role": v.role.value if hasattr(v.role, 'value') else str(v.role),
             "email": v.email,
             "phone": v.phone,
-            "is_verified": v.is_verified,
+            "is_verified": getattr(v, "is_verified", True),
             "created_at": v.created_at
         })
     return success_response(data=results, message=f"Retrieved {len(results)} registered volunteers")

@@ -145,3 +145,20 @@ def update_relief_center(
     )
     return success_response(data=resp, message="Relief center updated successfully")
 
+
+@router.delete("/{id}", summary="Delete Relief Center")
+def delete_relief_center(
+    id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Deletes a relief supply depot from the registry.
+    """
+    deleted = ResourceService.delete_relief_center(db, id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Relief center with ID {id} was not found"
+        )
+    return success_response(data={"deleted_id": id}, message="Relief center deleted successfully")
+

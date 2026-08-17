@@ -305,3 +305,30 @@ class ResourceService:
 
         results.sort(key=lambda item: item.distance_km or 0.0)
         return results
+
+    @staticmethod
+    def delete_shelter(db: Session, shelter_id: str) -> bool:
+        shelter = db.query(Shelter).filter(Shelter.id == shelter_id).first()
+        if not shelter:
+            return False
+        db.delete(shelter)
+        db.commit()
+        return True
+
+    @staticmethod
+    def delete_hospital(db: Session, hospital_id: str) -> bool:
+        hospital = db.query(Hospital).filter(Hospital.id == hospital_id).first()
+        if not hospital:
+            return False
+        db.delete(hospital)
+        db.commit()
+        return True
+
+    @staticmethod
+    def delete_relief_center(db: Session, rc_id: str) -> bool:
+        rc = db.query(ReliefCenter).filter(ReliefCenter.id == rc_id).first()
+        if not rc:
+            return False
+        db.delete(rc)
+        db.commit()
+        return True

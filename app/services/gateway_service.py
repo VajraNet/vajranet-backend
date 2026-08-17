@@ -65,7 +65,7 @@ class GatewayService:
                 if event.type == OfflineEventType.SOS:
                     lat = float(payload.get("latitude", 0.0))
                     lon = float(payload.get("longitude", 0.0))
-                    msg = str(payload.get("message", "Offline SOS Emergency Alert"))
+                    msg = str(payload.get("message") or payload.get("notes") or "Offline SOS Emergency Alert")
                     sev_str = str(payload.get("severity", "CRITICAL")).upper()
                     try:
                         severity = SOSSeverity(sev_str)

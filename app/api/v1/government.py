@@ -32,7 +32,7 @@ def list_government_sos(
     severity: Optional[SOSSeverity] = Query(None, description="Filter by severity: LOW, MEDIUM, HIGH, CRITICAL"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    current_user: User = Depends(require_any_role([UserRole.GOVERNMENT, UserRole.VOLUNTEER, UserRole.ADMIN])),
+    current_user: User = Depends(require_role(UserRole.GOVERNMENT)),
     db: Session = Depends(get_db)
 ):
     sos_alerts = SOSService.get_all_sos(db, status_filter=status, severity_filter=severity, skip=skip, limit=limit)
@@ -44,7 +44,7 @@ def list_government_sos(
 def update_government_sos(
     id: str,
     update_data: SOSUpdate,
-    current_user: User = Depends(require_any_role([UserRole.GOVERNMENT, UserRole.VOLUNTEER, UserRole.ADMIN])),
+    current_user: User = Depends(require_role(UserRole.GOVERNMENT)),
     db: Session = Depends(get_db)
 ):
     sos = SOSService.update_sos(db, id, update_data)
@@ -66,7 +66,7 @@ def list_government_incidents(
     status: Optional[IncidentStatus] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    current_user: User = Depends(require_any_role([UserRole.GOVERNMENT, UserRole.VOLUNTEER, UserRole.ADMIN])),
+    current_user: User = Depends(require_role(UserRole.GOVERNMENT)),
     db: Session = Depends(get_db)
 ):
     incidents = IncidentService.get_all_incidents(
@@ -96,7 +96,7 @@ def list_government_incidents(
 def update_government_incident(
     id: str,
     update_data: IncidentUpdate,
-    current_user: User = Depends(require_any_role([UserRole.GOVERNMENT, UserRole.VOLUNTEER, UserRole.ADMIN])),
+    current_user: User = Depends(require_role(UserRole.GOVERNMENT)),
     db: Session = Depends(get_db)
 ):
     inc = IncidentService.update_incident(db, id, update_data)

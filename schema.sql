@@ -355,3 +355,23 @@ CREATE TABLE IF NOT EXISTS offline_events (
 
 CREATE INDEX IF NOT EXISTS idx_offline_events_message_id ON offline_events(message_id);
 CREATE INDEX IF NOT EXISTS idx_offline_events_gateway ON offline_events(gateway_id);
+
+-- -----------------------------------------------------------------------------
+-- 12. TRUSTED SMS RELAY DEVICES
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS trusted_devices (
+    id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    user_id VARCHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    role VARCHAR(30) NOT NULL DEFAULT 'GOVERNMENT',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_trusted_devices_user_id ON trusted_devices(user_id);
+CREATE INDEX IF NOT EXISTS idx_trusted_devices_phone ON trusted_devices(phone);
+

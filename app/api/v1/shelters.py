@@ -161,3 +161,20 @@ def update_shelter(
     )
     return success_response(data=resp, message="Shelter updated successfully")
 
+
+@router.delete("/{id}", summary="Delete Shelter")
+def delete_shelter(
+    id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Deletes a disaster shelter from the registry.
+    """
+    deleted = ResourceService.delete_shelter(db, id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Shelter with ID {id} was not found"
+        )
+    return success_response(data={"deleted_id": id}, message="Shelter deleted successfully")
+

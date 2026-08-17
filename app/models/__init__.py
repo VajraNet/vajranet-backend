@@ -46,4 +46,5 @@ __all__ = [
     "OfflineEventType",
     "OfflineEventStatus",
     "EmergencyContact",
+    "TrustedDevice",
 ]

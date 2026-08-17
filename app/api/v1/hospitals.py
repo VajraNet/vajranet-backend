@@ -157,3 +157,20 @@ def update_hospital(
     )
     return success_response(data=resp, message="Hospital updated successfully")
 
+
+@router.delete("/{id}", summary="Delete Hospital")
+def delete_hospital(
+    id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Deletes a hospital facility from the registry.
+    """
+    deleted = ResourceService.delete_hospital(db, id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Hospital with ID {id} was not found"
+        )
+    return success_response(data={"deleted_id": id}, message="Hospital deleted successfully")
+
