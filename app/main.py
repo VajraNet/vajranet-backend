@@ -47,7 +47,7 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-# Enable GZip response compression for responses > 500 bytes (reduces bandwidth by 85-90%)
+# Enable GZIP compression for all responses >= 500 bytes (reduces bandwidth by 85-90%)
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Configure CORS for All Local and Deployed Frontends
