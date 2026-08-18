@@ -54,6 +54,8 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://vajranet.vercel.app",
+        "https://vajranet-backoffice.onrender.com",
         "https://vajranet.onrender.com",
         "https://vajranet-backend.onrender.com",
         "http://localhost:3000",
