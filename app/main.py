@@ -2,6 +2,7 @@ import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 
@@ -45,6 +46,9 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+# Enable GZip response compression for responses > 500 bytes (reduces bandwidth by 85-90%)
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Configure CORS for All Local and Deployed Frontends
 app.add_middleware(
