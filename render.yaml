@@ -1,9 +1,3 @@
-databases:
-  - name: vajranet-db
-    databaseName: vajranet
-    user: vajranet_user
-    plan: free
-
 services:
   - type: web
     name: vajranet-backend
@@ -18,16 +12,12 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: vajranet-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: FRONTEND_URL
-        value: https://vajranet.vercel.app,http://localhost:5173,capacitor://localhost,*
+        value: "https://vajranet.vercel.app,http://localhost:5173,capacitor://localhost,*"
       - key: AI_PROVIDER
         value: mock
-      - key: AI_API_KEY
-        value: mock-key
       - key: ENABLE_CLOUDINARY
         value: "false"
