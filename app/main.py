@@ -27,6 +27,9 @@ async def lifespan(app: FastAPI):
     try:
         Base.metadata.create_all(bind=db_session.engine)
         logger.info("Database schema verified.")
+        from app.db.seed import seed_default_data_if_empty
+        with db_session.SessionLocal() as session:
+            seed_default_data_if_empty(session)
     except Exception as exc:
         logger.warning(f"Database connection warning at boot: {exc}")
     yield
